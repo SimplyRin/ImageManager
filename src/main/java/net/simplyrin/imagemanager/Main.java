@@ -63,6 +63,7 @@ public class Main {
 	private File MP4 = null;
 	private File ZIP = null;
 	private String ZIP_TYPE = null;
+	private String ZIP_ONCOPIED = null;
 	private File ZIP_ARCHIVE = null;
 	private File UNKNOWN = null;
 
@@ -90,6 +91,7 @@ public class Main {
 			jsonObject.addProperty("MP4", "C:/Users/%USERNAME/Pictures/ImageManager/MP4");
 			jsonObject.addProperty("Zip", "C:/Users/%USERNAME/Pictures/ImageManager/Zip");
 			jsonObject.addProperty("Zip_Type", "default");
+			jsonObject.addProperty("Zip_OnCopied", "keep");
 			jsonObject.addProperty("Zip_Archive", "C:/Users/%USERNAME/Pictures/ImageManager/Zip/Archive");
 			jsonObject.addProperty("Unknown", "C:/Users/%USERNAME/Pictures/ImageManager/Unknown");
 
@@ -122,6 +124,7 @@ public class Main {
 		MP4 = new File(this.replacePathName(jsonObject.get("MP4").getAsString()));
 		ZIP = new File(this.replacePathName(jsonObject.get("Zip").getAsString()));
 		ZIP_TYPE = jsonObject.get("Zip_Type").getAsString();
+		ZIP_ONCOPIED = jsonObject.get("Zip_OnCopied").getAsString();
 		ZIP_ARCHIVE = new File(this.replacePathName(jsonObject.get("Zip_Archive").getAsString()));
 		UNKNOWN = new File(this.replacePathName(jsonObject.get("Unknown").getAsString()));
 
@@ -150,23 +153,33 @@ public class Main {
 								if (name.endsWith("-img.zip")) {
 									File tFolder = new File(ZIP, FilenameUtils.getBaseName(name));
 
-									if (ZIP_TYPE.equals("each")) {
-										tFolder = IMAGES;
-									} else if (ZIP_TYPE.equalsIgnoreCase("raw")) {
-										tFolder = ZIP;
-									} else if (ZIP_TYPE.equalsIgnoreCase("username")) {
-										tFolder = new File(ZIP, name.split("-")[0]);
+									String[] types = ZIP_TYPE.split(",");
+
+									for (String type : types) {
+										if (type.equals("each")) {
+											tFolder = IMAGES;
+										} else if (type.equalsIgnoreCase("raw")) {
+											tFolder = ZIP;
+										} else if (type.equalsIgnoreCase("username")) {
+											tFolder = new File(ZIP, name.split("-")[0]);
+										}
+
+										tFolder.mkdirs();
+
+										String qM = "\"";
+										String command = qM + _7ZIP.getAbsolutePath() + qM + " x -y -o" + qM
+												+ tFolder.getAbsolutePath() + qM + " " + qM + file.getAbsolutePath() + qM;
+
+										this.runCommand(command, null);
+
+										System.out.println("Copied to " + tFolder.getAbsolutePath());
+
+										if (ZIP_ONCOPIED.equalsIgnoreCase("delete")) {
+											file.delete();
+										}
 									}
 
-									tFolder.mkdirs();
 
-									String qM = "\"";
-									String command = qM + _7ZIP.getAbsolutePath() + qM + " x -y -o" + qM
-											+ tFolder.getAbsolutePath() + qM + " " + qM + file.getAbsolutePath() + qM;
-
-									this.runCommand(command, null);
-
-									System.out.println("Copied to " + tFolder.getAbsolutePath());
 								} else {
 									System.out.println("Copied to " + target.getAbsolutePath());
 								}
