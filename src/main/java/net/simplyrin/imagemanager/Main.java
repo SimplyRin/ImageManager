@@ -62,6 +62,7 @@ public class Main {
 	private File IMAGES = null;
 	private File MP4 = null;
 	private File ZIP = null;
+	private String ONCOPIED = null;
 	private String ZIP_TYPE = null;
 	private File ZIP_ARCHIVE = null;
 	private File UNKNOWN = null;
@@ -88,6 +89,7 @@ public class Main {
 			jsonObject.addProperty("Downloads", "C:/Users/%USERNAME/Downloads");
 			jsonObject.addProperty("Images", "C:/Users/%USERNAME/Pictures/ImageManager/Images");
 			jsonObject.addProperty("MP4", "C:/Users/%USERNAME/Pictures/ImageManager/MP4");
+			jsonObject.addProperty("OnCopied", "keep");
 			jsonObject.addProperty("Zip", "C:/Users/%USERNAME/Pictures/ImageManager/Zip");
 			jsonObject.addProperty("Zip_Type", "default");
 			jsonObject.addProperty("Zip_Archive", "C:/Users/%USERNAME/Pictures/ImageManager/Zip/Archive");
@@ -120,6 +122,7 @@ public class Main {
 		DOWNLOADS = new File(this.replacePathName(jsonObject.get("Downloads").getAsString()));
 		IMAGES = new File(this.replacePathName(jsonObject.get("Images").getAsString()));
 		MP4 = new File(this.replacePathName(jsonObject.get("MP4").getAsString()));
+		ONCOPIED = jsonObject.get("OnCopied").getAsString();
 		ZIP = new File(this.replacePathName(jsonObject.get("Zip").getAsString()));
 		ZIP_TYPE = jsonObject.get("Zip_Type").getAsString();
 		ZIP_ARCHIVE = new File(this.replacePathName(jsonObject.get("Zip_Archive").getAsString()));
@@ -139,36 +142,50 @@ public class Main {
 					String name = file.getName();
 
 					if (name.endsWith("_orig.jpg") || name.endsWith("_orig.png")
-							|| (name.split("-").length >= 2 && (name.endsWith("-vid1.mp4") || name.endsWith("-img.zip")))) {
+							|| (name.split("-").length >= 2 && (name.endsWith("-vid1.mp4") || name.endsWith("-img.zip")))
+							|| (name.endsWith("-media.zip") && name.contains("(") && name.contains(")") && name.contains("_"))) {
 						File target = new File(this.getDirectory(name), name);
 						if (!target.exists()) {
 							System.out.println("Detected: " + file.getName());
 
 							try {
+								System.out.println("Copying... " + file.getName());
 								FileUtils.copyFile(file, target);
+								System.out.println("Copied " + file.getName());
 
-								if (name.endsWith("-img.zip")) {
+								if (name.endsWith("-img.zip") || (name.endsWith("-media.zip") && name.contains("(") && name.contains(")"))) {
 									File tFolder = new File(ZIP, FilenameUtils.getBaseName(name));
 
-									if (ZIP_TYPE.equals("each")) {
-										tFolder = IMAGES;
-									} else if (ZIP_TYPE.equalsIgnoreCase("raw")) {
-										tFolder = ZIP;
-									} else if (ZIP_TYPE.equalsIgnoreCase("username")) {
-										tFolder = new File(ZIP, name.split("-")[0]);
+									String[] types = ZIP_TYPE.split(",");
+
+									for (String type : types) {
+										if (type.equals("each")) {
+											tFolder = IMAGES;
+										} else if (type.equalsIgnoreCase("raw")) {
+											tFolder = ZIP;
+										} else if (type.equalsIgnoreCase("username")) {
+											tFolder = new File(ZIP, name.split("-")[0]);
+										}
+
+										tFolder.mkdirs();
+
+										String qM = "\"";
+										String command = qM + _7ZIP.getAbsolutePath() + qM + " x -y -o" + qM
+												+ tFolder.getAbsolutePath() + qM + " " + qM + target.getAbsolutePath() + qM;
+
+										System.out.println("Execution command: " + command);
+
+										this.runCommand(command, null);
+
+										System.out.println("Copied to " + tFolder.getAbsolutePath());
 									}
-
-									tFolder.mkdirs();
-
-									String qM = "\"";
-									String command = qM + _7ZIP.getAbsolutePath() + qM + " x -y -o" + qM
-											+ tFolder.getAbsolutePath() + qM + " " + qM + file.getAbsolutePath() + qM;
-
-									this.runCommand(command, null);
-
-									System.out.println("Copied to " + tFolder.getAbsolutePath());
 								} else {
 									System.out.println("Copied to " + target.getAbsolutePath());
+								}
+
+								if (ONCOPIED.equalsIgnoreCase("delete")) {
+									System.out.println("OnCopied is set to delete, '" + file.getName() + "' is being deleted.");
+									file.delete();
 								}
 							} catch (IOException e) {
 								System.out.println("Failed copy: " + file.getName());
