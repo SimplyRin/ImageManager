@@ -64,7 +64,6 @@ public class Main {
 	private File ZIP = null;
 	private String ONCOPIED = null;
 	private String ZIP_TYPE = null;
-	private String ZIP_ONCOPIED = null;
 	private File ZIP_ARCHIVE = null;
 	private File UNKNOWN = null;
 
@@ -127,7 +126,6 @@ public class Main {
 		ONCOPIED = jsonObject.get("OnCopied").getAsString();
 		ZIP = new File(this.replacePathName(jsonObject.get("Zip").getAsString()));
 		ZIP_TYPE = jsonObject.get("Zip_Type").getAsString();
-		ZIP_ONCOPIED = jsonObject.get("Zip_OnCopied").getAsString();
 		ZIP_ARCHIVE = new File(this.replacePathName(jsonObject.get("Zip_Archive").getAsString()));
 		UNKNOWN = new File(this.replacePathName(jsonObject.get("Unknown").getAsString()));
 
