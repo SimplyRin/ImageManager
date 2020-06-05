@@ -51,7 +51,8 @@ public class Main {
 	}
 
 	public void run() {
-		new RinStream();
+		RinStream rinStream = new RinStream();
+		rinStream.setSaveLog(true);
 
 		this.initialization();
 		new Thread(() -> task()).start();
@@ -68,6 +69,8 @@ public class Main {
 	private File UNKNOWN = null;
 
 	private int LOOP = 0;
+	private boolean SKIPPROFILEDOWNLOAD = false;
+	private boolean DELETEARCHIVEAFTERSTARTING = false;
 
 	public void initialization() {
 		System.out.println("Initializing...");
@@ -92,9 +95,10 @@ public class Main {
 			jsonObject.addProperty("OnCopied", "keep");
 			jsonObject.addProperty("Zip", "C:/Users/%USERNAME/Pictures/ImageManager/Zip");
 			jsonObject.addProperty("Zip_Type", "default");
-			jsonObject.addProperty("Zip_OnCopied", "keep");
 			jsonObject.addProperty("Zip_Archive", "C:/Users/%USERNAME/Pictures/ImageManager/Zip/Archive");
 			jsonObject.addProperty("Unknown", "C:/Users/%USERNAME/Pictures/ImageManager/Unknown");
+			jsonObject.addProperty("SkipProfileDownload", false);
+			jsonObject.addProperty("DeleteArchiveAfterStarting", false);
 
 			String pretty = new GsonBuilder().setPrettyPrinting().create().toJson(jsonObject);
 
@@ -129,6 +133,19 @@ public class Main {
 		ZIP_ARCHIVE = new File(this.replacePathName(jsonObject.get("Zip_Archive").getAsString()));
 		UNKNOWN = new File(this.replacePathName(jsonObject.get("Unknown").getAsString()));
 
+		// Zip_Type が EACH, RAW の時
+		SKIPPROFILEDOWNLOAD = jsonObject.get("SkipProfileDownload").getAsBoolean();
+
+		// 起動時に Archive フォルダの中身を自動的に削除
+		DELETEARCHIVEAFTERSTARTING = jsonObject.get("DeleteArchiveAfterStarting").getAsBoolean();
+
+		if (this.DELETEARCHIVEAFTERSTARTING) {
+			for (File archive : ZIP_ARCHIVE.listFiles()) {
+				archive.delete();
+				System.out.println("Archive file " + archive.getName() + " deleted.");
+			}
+		}
+
 		System.out.println("Initialized.");
 	}
 
@@ -150,9 +167,9 @@ public class Main {
 							System.out.println("Detected: " + file.getName());
 
 							try {
-								System.out.println("Copying... " + file.getName());
+								System.out.println("Copying... " + file.getName() + " to " + target.getAbsolutePath());
 								FileUtils.copyFile(file, target);
-								System.out.println("Copied " + file.getName());
+								System.out.println("Copied " + file.getName() + " to " + target.getAbsolutePath());
 
 								if (name.endsWith("-img.zip") || (name.endsWith("-media.zip") && name.contains("(") && name.contains(")"))) {
 									File tFolder = new File(ZIP, FilenameUtils.getBaseName(name));
@@ -166,6 +183,11 @@ public class Main {
 											tFolder = ZIP;
 										} else if (type.equalsIgnoreCase("username")) {
 											tFolder = new File(ZIP, name.split("-")[0]);
+										}
+
+										if ((tFolder == ZIP || tFolder == IMAGES) && this.SKIPPROFILEDOWNLOAD && name.endsWith("-media.zip")) {
+											System.out.println("SkipProfileDownload is set to true, skipping...");
+											continue;
 										}
 
 										tFolder.mkdirs();
@@ -263,13 +285,14 @@ public class Main {
 				e.printStackTrace();
 			}
 			if (callback != null) {
-				callback.response("taskEnded");
+				callback.processEnded();
 			}
 		}).start();
 	}
 
 	public interface Callback {
 		void response(String response);
+		void processEnded();
 	}
 
 }

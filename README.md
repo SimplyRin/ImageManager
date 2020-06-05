@@ -1,6 +1,10 @@
 # ImageManager
 ダウンロードフォルダ、片付いてなくない？うぉうぉう。
 
+でもね、ImageManager 自体が散らかってきたんだ...
+
+めんどくさいから使いたかったらビルドもしてください。
+
 Twitter でダウンロードした JPG, PNG, ZIP ファイルなどを別の指定したフォルダにコピーさせます。
 
 ダウンロードフォルダが Twitter の画像などで埋まる方におすすめかもしれません。
@@ -15,13 +19,16 @@ Twitter でダウンロードした JPG, PNG, ZIP ファイルなどを別の指
 - [7-Zip](https://sevenzip.osdn.jp/)
 
 # Configuration
-- %USERNAME は使用している PC のユーザー名に置き換わります。
-- Loop はダウンロードフォルダをスキャンするタイミングです。 (初期値 60 秒ごと)
-- Zip_Type は現在以下のオプションが利用可能です。
-  - default: ZIP 名のフォルダを作成してその中にファイルを展開します。
-  - each: 画像(Images)フォルダに ZIP の中ファイルを展開します。
-  - raw: ZIP フォルダにファイルを展開します。
-  - username: ZIP フォルダ名からユーザーネームを取得、フォルダを作成しその中にファイルを展開します。 (おすすめ)
+- `USERNAME` : 使用している PC のユーザー名に置き換わります。
+- `Loop` : ダウンロードフォルダをスキャンするタイミングです。 (初期値 `60` 秒ごと)
+- `OnCopied` : コピー時に元のファイルを削除します。
+- `Zip_Type` は現在以下のオプションが利用可能です。
+  - `default`: ZIP 名のフォルダを作成してその中にファイルを展開します。
+  - `each`: 画像(Images)フォルダに ZIP の中ファイルを展開します。
+  - `raw`: ZIP フォルダにファイルを展開します。
+  - `username`: ZIP フォルダ名からユーザーネームを取得、フォルダを作成しその中にファイルを展開します。 (おすすめ)
+- `SkipProfileDownload` : true にすると、[Twitter メディアダウンローダ](https://chrome.google.com/webstore/detail/twitter-media-downloader/cblpjenafgeohmnjknfhpdbdljfkndig) でダウンロードしたファイルは、EACH, RAW にコピーしなくなります。
+- `DeleteArchiveAfterStarting` : 起動時に Zip_Archive フォルダを削除します。
 ```Json
 {
 	"7z.exe": "C:/Program Files/7-Zip/7z.exe",
@@ -30,9 +37,12 @@ Twitter でダウンロードした JPG, PNG, ZIP ファイルなどを別の指
 	"Images": "C:/Users/%USERNAME/Pictures/ImageManager/Images",
 	"MP4": "C:/Users/%USERNAME/Pictures/ImageManager/MP4",
 	"Zip": "C:/Users/%USERNAME/Pictures/ImageManager/Zip",
+	"OnCopied": "delete",
 	"Zip_Type": "default",
 	"Zip_Archive": "C:/Users/%USERNAME/Pictures/ImageManager/Zip/Archive",
-	"Unknown": "C:/Users/%USERNAME/Pictures/ImageManager/Unknown"
+	"Unknown": "C:/Users/%USERNAME/Pictures/ImageManager/Unknown",
+	"SkipProfileDownload": true,
+	"DeleteArchiveAfterStarting": false
 }
 ```
 
